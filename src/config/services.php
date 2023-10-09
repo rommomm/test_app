@@ -31,4 +31,16 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('APP_URL') . '/sign-in/google/callback',
+    ],
+
+    'weather' => [
+        'url' => env('OPEN_WEATHER_URL'),
+        'api_key' => env('OPEN_WEATHER_API_KEY'),
+        'ip_ify_url' => env('IP_IFY_URL'),
+        'ip_api_url' => env('IP_API_URL'),
+    ]
 ];

@@ -1,6 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\WeatherController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +16,13 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::post('sign-up', [AuthController::class, 'signUp'])->name('signUp');
+Route::post('sign-in', [AuthController::class, 'signIn'])->name('signIn');
+
+Route::middleware(['auth:sanctum', 'check_user_ip'])->group(function () {
+    Route::post('sign-out', [AuthController::class, 'signOut'])->name('signOut');
+    Route::get('get-current-weather',[WeatherController::class, 'getCurrentWeather'])->name('getWeather');
+    Route::apiResource('invoice', InvoiceController::class)
+        ->only(['index', 'update', 'destroy', 'store'])
+        ->names('invoice');
 });

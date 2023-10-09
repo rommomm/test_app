@@ -1,66 +1,84 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Docker Workflow
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This is a pretty simplified, but complete, workflow for using Docker and Docker Compose with Laravel development. The included docker-compose.yml file, Dockerfiles, and config files, set up a LEMP stack powering a Laravel application in the `code` directory.
 
-## About Laravel
+## Getting Started:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Automated Start
+There is a convenient `start.sh` script available that automates the setup:
+```
+#!/bin/bash
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+cp src/.env.example src/.env
+cd .docker
+cp .env.example .env
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+# Fetch the user's UID and GID
+uid=$(id -u)
+gid=$(id -g)
 
-## Learning Laravel
+# Update PUID and PGID values in the .env file
+sed -i "s/PUID=[0-9]*/PUID=$uid/" .env
+sed -i "s/PGID=[0-9]*/PGID=$gid/" .env
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+docker-compose stop
+docker-compose build
+docker-compose up -d
+docker-compose run php composer install
+docker-compose run php php artisan migrate:fresh
+```
+Run this script using `./start.sh` to set up and launch the app.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Configuration Settings
+Copy `.env.example` to `.env` and set the following variables in the src and .docker directory
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### Docker Container Versions
+The following are used to set the container versions for the services. Here is an example configuration:
+- `PHP_VERSION=8.2-fpm-alpine`
+- `MYSQL_VERSION=8.1.0`
+- `REDIS_VERSION=latest`
+- `NGINX_VERSION=stable-alpine`
 
-## Laravel Sponsors
+#### Docker Services Exposed Ports
+The following are used to configure the exposed ports for the services. Here is an example, but update to de-conflict ports:
+- `HTTP_ON_HOST=8080`
+- `MYSQL_ON_HOST=3316`
+- `MYSQL_TEST_ON_HOST=3326`
+- `REDIS_ON_HOST=6379`
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+#### Database Settings
+The following are used by docker when building the database service:
+- `MYSQL_DATABASE=test_app_db`
+- `MYSQL_USER=root`
+- `MYSQL_PASSWORD=root`
+- `MYSQL_ROOT_PASSWORD=root`
 
-### Premium Partners
+## Usage
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+To get started, make sure you have [Docker installed](https://docs.docker.com/docker-for-mac/install/) on your system, and then copy this directory to a desired location on your development machine.
 
-## Contributing
+Next, open the .env file and update any settings (e.g., versions & exposed ports) to match your desired development environment.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Then, navigate in your terminal to that directory, and spin up the containers for the full web server stack by running `docker-compose up -d --build`.
 
-## Code of Conduct
+After that completes, run the following to install and compile the dependencies for the application:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- `docker-compose exec php sh`
+- `composer install`
+- `php artisan migrate`
+- 
+## Test
+To run the tests you need to run the following commands:
 
-## Security Vulnerabilities
+- `php artisan --env=test config:cache`
+- `php artisan --env=test migrate:fresh`
+- `vendor/bin/phpunit ./tests/Feature/`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+After finishing the tests run the following command:
 
-## License
+- `php artisan config:cache`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Queue
+To run queues
+- `php artisan queue:work`
+- `php artisan queue:work --queue=emails`
